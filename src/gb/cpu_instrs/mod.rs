@@ -1,5 +1,6 @@
 use super::CpuTestHarness;
 
+mod test_01;
 mod test_04;
 mod test_05;
 mod test_06;
@@ -11,6 +12,7 @@ mod test_11;
 ///
 /// The tests were originally authored by `Shay Green (blargg)`.
 pub fn test_all(cpu: &mut impl CpuTestHarness) {
+  test_01::special(cpu);
   test_04::op_r_imm(cpu);
   test_05::op_rp(cpu);
   test_06::ld_r_r(cpu);

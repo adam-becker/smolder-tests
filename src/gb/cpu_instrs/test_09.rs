@@ -1,6 +1,6 @@
 use crate::{
   crc::{Crc, CrcSource},
-  gb::{CpuRegister, CpuTestHarness},
+  gb::{CpuReg8, CpuTestHarness},
 };
 
 pub(crate) fn op_r_r(cpu: &mut impl CpuTestHarness) {
@@ -14,17 +14,17 @@ pub(crate) fn op_r_r(cpu: &mut impl CpuTestHarness) {
         let a = VALUES[n];
 
         for n in 0..9 {
-          cpu.set_reg(CpuRegister::A, a); // AF
-          cpu.set_reg(CpuRegister::F, f);
+          cpu.set_reg_8(CpuReg8::A, a); // AF
+          cpu.set_reg_8(CpuReg8::F, f);
 
-          cpu.set_reg(CpuRegister::B, VALUES[n + 0]); // BC
-          cpu.set_reg(CpuRegister::C, VALUES[n + 1]);
+          cpu.set_reg_8(CpuReg8::B, VALUES[n + 0]); // BC
+          cpu.set_reg_8(CpuReg8::C, VALUES[n + 1]);
 
-          cpu.set_reg(CpuRegister::H, VALUES[n + 2]); // HL
-          cpu.set_reg(CpuRegister::L, VALUES[n + 3]);
+          cpu.set_reg_8(CpuReg8::H, VALUES[n + 2]); // HL
+          cpu.set_reg_8(CpuReg8::L, VALUES[n + 3]);
 
-          cpu.set_reg(CpuRegister::D, VALUES[n + 4]); // DE
-          cpu.set_reg(CpuRegister::E, VALUES[n + 5]);
+          cpu.set_reg_8(CpuReg8::D, VALUES[n + 4]); // DE
+          cpu.set_reg_8(CpuReg8::E, VALUES[n + 5]);
 
           cpu.run();
           cpu.add(&mut crc);

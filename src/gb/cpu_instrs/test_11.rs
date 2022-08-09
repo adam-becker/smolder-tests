@@ -1,6 +1,6 @@
 use crate::{
   crc::Crc,
-  gb::{CpuRegister, CpuTestHarness, RP_TEMP},
+  gb::{CpuReg16, CpuReg8, CpuTestHarness, RP_TEMP},
 };
 
 const BC: u16 = RP_TEMP + 0;
@@ -22,24 +22,19 @@ pub(crate) fn op_a_hl(cpu: &mut impl CpuTestHarness) {
           cpu.set_mem(DE, VALUES[n + 1]);
           cpu.set_mem(HL, VALUES[n + 2]);
 
-          cpu.set_reg(CpuRegister::B, (BC >> 8) as u8); // BC
-          cpu.set_reg(CpuRegister::C, (BC >> 0) as u8);
+          cpu.set_reg_16(CpuReg16::BC, BC); // BC
+          cpu.set_reg_16(CpuReg16::DE, DE); // DE
+          cpu.set_reg_16(CpuReg16::HL, HL); // HL
 
-          cpu.set_reg(CpuRegister::D, (DE >> 8) as u8); // DE
-          cpu.set_reg(CpuRegister::E, (DE >> 0) as u8);
-
-          cpu.set_reg(CpuRegister::H, (HL >> 8) as u8); // HL
-          cpu.set_reg(CpuRegister::L, (HL >> 0) as u8);
-
-          cpu.set_reg(CpuRegister::A, a); // AF
-          cpu.set_reg(CpuRegister::F, f);
+          cpu.set_reg_8(CpuReg8::A, a); // AF
+          cpu.set_reg_8(CpuReg8::F, f);
 
           cpu.run();
 
-          crc.add(cpu.get_reg(CpuRegister::A));
-          crc.add(cpu.get_reg(CpuRegister::F));
-          crc.add(cpu.get_reg(CpuRegister::H));
-          crc.add(cpu.get_reg(CpuRegister::L));
+          crc.add(cpu.get_reg_8(CpuReg8::A));
+          crc.add(cpu.get_reg_8(CpuReg8::F));
+          crc.add(cpu.get_reg_8(CpuReg8::H));
+          crc.add(cpu.get_reg_8(CpuReg8::L));
 
           crc.add(cpu.get_mem(BC));
           crc.add(cpu.get_mem(DE));

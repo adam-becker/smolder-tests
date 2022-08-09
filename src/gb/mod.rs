@@ -7,17 +7,17 @@ const RP_TEMP: u16 = 0xdef4;
 
 impl<T: CpuTestHarness> CrcSource for T {
   fn add(&self, crc: &mut crate::crc::Crc) {
-    crc.add(self.get_reg(CpuRegister::A)); // AF
-    crc.add(self.get_reg(CpuRegister::F));
+    crc.add(self.get_reg_8(CpuReg8::A)); // AF
+    crc.add(self.get_reg_8(CpuReg8::F));
 
-    crc.add(self.get_reg(CpuRegister::B)); // BC
-    crc.add(self.get_reg(CpuRegister::C));
+    crc.add(self.get_reg_8(CpuReg8::B)); // BC
+    crc.add(self.get_reg_8(CpuReg8::C));
 
-    crc.add(self.get_reg(CpuRegister::D)); // DE
-    crc.add(self.get_reg(CpuRegister::E));
+    crc.add(self.get_reg_8(CpuReg8::D)); // DE
+    crc.add(self.get_reg_8(CpuReg8::E));
 
-    crc.add(self.get_reg(CpuRegister::H)); // HL
-    crc.add(self.get_reg(CpuRegister::L))
+    crc.add(self.get_reg_8(CpuReg8::H)); // HL
+    crc.add(self.get_reg_8(CpuReg8::L));
   }
 }
 
@@ -37,17 +37,23 @@ pub trait CpuTestHarness {
   }
 
   /// Gets a register value.
-  fn get_reg(&self, n: CpuRegister) -> u8;
+  fn get_reg_8(&self, n: CpuReg8) -> u8;
 
   /// Sets a register value.
-  fn set_reg(&mut self, n: CpuRegister, val: u8);
+  fn set_reg_8(&mut self, n: CpuReg8, val: u8);
+
+  /// Gets a register value.
+  fn get_reg_16(&self, n: CpuReg16) -> u16;
+
+  /// Sets a register value.
+  fn set_reg_16(&mut self, n: CpuReg16, val: u16);
 
   /// Runs an instruction that is available at `$0000`.
   fn run(&mut self);
 }
 
-/// Values used to reference the various CPU registers of the `SM83` core.
-pub enum CpuRegister {
+/// Values used to reference the various 8-bit CPU registers of the `SM83` core.
+pub enum CpuReg8 {
   /// The `A` register.
   A,
   /// The `F` register.
@@ -64,4 +70,20 @@ pub enum CpuRegister {
   H,
   /// The `L` register.
   L,
+}
+
+/// Values used to reference the various 16-bit CPU registers of the `SM83` core.
+pub enum CpuReg16 {
+  /// The `AF` register.
+  AF,
+  /// The `BC` register.
+  BC,
+  /// The `DE` register.
+  DE,
+  /// The `HL` register.
+  HL,
+  /// The `PC` register.
+  PC,
+  /// The `SP` register.
+  SP,
 }

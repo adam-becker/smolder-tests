@@ -1,6 +1,6 @@
 use crate::{
   crc::{Crc, CrcSource},
-  gb::{CpuRegister, CpuTestHarness},
+  gb::{CpuReg16, CpuReg8, CpuTestHarness},
 };
 
 pub(crate) fn op_rp(cpu: &mut impl CpuTestHarness) {
@@ -18,17 +18,12 @@ pub(crate) fn op_rp(cpu: &mut impl CpuTestHarness) {
           let de = VALUES[n + 1];
           let af = VALUES[n + 2];
 
-          cpu.set_reg(CpuRegister::A, (af >> 0) as u8); // AF
-          cpu.set_reg(CpuRegister::F, f);
+          cpu.set_reg_16(CpuReg16::BC, bc); // BC
+          cpu.set_reg_16(CpuReg16::DE, de); // DE
+          cpu.set_reg_16(CpuReg16::HL, hl); // HL
 
-          cpu.set_reg(CpuRegister::B, (bc >> 8) as u8); // BC
-          cpu.set_reg(CpuRegister::C, (bc >> 0) as u8);
-
-          cpu.set_reg(CpuRegister::D, (de >> 8) as u8); // DE
-          cpu.set_reg(CpuRegister::E, (de >> 0) as u8);
-
-          cpu.set_reg(CpuRegister::H, (hl >> 8) as u8); // HL
-          cpu.set_reg(CpuRegister::L, (hl >> 0) as u8);
+          cpu.set_reg_8(CpuReg8::A, (af >> 0) as u8); // AF
+          cpu.set_reg_8(CpuReg8::F, f);
 
           cpu.run();
           cpu.add(&mut crc);

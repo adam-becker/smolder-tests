@@ -1,6 +1,6 @@
 use crate::{
   crc::{Crc, CrcSource},
-  gb::{CpuRegister, CpuTestHarness, RP_TEMP},
+  gb::{CpuReg16, CpuReg8, CpuTestHarness, RP_TEMP},
 };
 
 pub(crate) fn op_r_imm(cpu: &mut impl CpuTestHarness) {
@@ -16,17 +16,12 @@ pub(crate) fn op_r_imm(cpu: &mut impl CpuTestHarness) {
         for value in VALUES {
           cpu.set_mem(1, value);
 
-          cpu.set_reg(CpuRegister::B, 0x12);
-          cpu.set_reg(CpuRegister::C, 0x34);
+          cpu.set_reg_16(CpuReg16::BC, 0x1234);
+          cpu.set_reg_16(CpuReg16::DE, 0x5678);
+          cpu.set_reg_16(CpuReg16::HL, RP_TEMP);
 
-          cpu.set_reg(CpuRegister::D, 0x56);
-          cpu.set_reg(CpuRegister::E, 0x78);
-
-          cpu.set_reg(CpuRegister::H, (RP_TEMP >> 8) as u8);
-          cpu.set_reg(CpuRegister::L, (RP_TEMP >> 0) as u8);
-
-          cpu.set_reg(CpuRegister::A, a);
-          cpu.set_reg(CpuRegister::F, f);
+          cpu.set_reg_8(CpuReg8::A, a);
+          cpu.set_reg_8(CpuReg8::F, f);
 
           cpu.run();
           cpu.add(&mut crc);

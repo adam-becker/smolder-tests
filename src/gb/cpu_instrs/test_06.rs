@@ -1,6 +1,6 @@
 use crate::{
   crc::{Crc, CrcSource},
-  gb::{CpuRegister, CpuTestHarness, RP_TEMP},
+  gb::{CpuReg16, CpuTestHarness, RP_TEMP},
 };
 
 pub(crate) fn ld_r_r(cpu: &mut impl CpuTestHarness) {
@@ -12,21 +12,10 @@ pub(crate) fn ld_r_r(cpu: &mut impl CpuTestHarness) {
     for af in [0xbc00, 0xbc10, 0xbce0, 0xbcf0] {
       cpu.set_mem(RP_TEMP, 0xde);
 
-      let bc = 0x3456;
-      let de = 0x789a;
-      let hl = RP_TEMP;
-
-      cpu.set_reg(CpuRegister::B, (bc >> 8) as u8);
-      cpu.set_reg(CpuRegister::C, (bc >> 0) as u8);
-
-      cpu.set_reg(CpuRegister::D, (de >> 8) as u8);
-      cpu.set_reg(CpuRegister::E, (de >> 0) as u8);
-
-      cpu.set_reg(CpuRegister::H, (hl >> 8) as u8);
-      cpu.set_reg(CpuRegister::L, (hl >> 0) as u8);
-
-      cpu.set_reg(CpuRegister::A, (af >> 8) as u8);
-      cpu.set_reg(CpuRegister::F, (af >> 0) as u8);
+      cpu.set_reg_16(CpuReg16::BC, 0x3456);
+      cpu.set_reg_16(CpuReg16::DE, 0x789a);
+      cpu.set_reg_16(CpuReg16::HL, RP_TEMP);
+      cpu.set_reg_16(CpuReg16::AF, af);
 
       cpu.run();
       cpu.add(&mut crc);
