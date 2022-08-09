@@ -10,11 +10,8 @@ impl Crc {
   }
 
   /// Adds a value to the checksum.
-  pub fn add(&mut self, val: u8) {
-    let idx = self.0 as u8;
-    let idx = idx ^ val;
-
-    self.0 = DATA_LUT[idx as usize] ^ (self.0 >> 8);
+  pub fn add(&mut self, val: &impl CrcHashable) {
+    val.add_to(self)
   }
 }
 
@@ -24,8 +21,18 @@ impl Default for Crc {
   }
 }
 
-pub(crate) trait CrcSource {
-  fn add(&self, crc: &mut Crc);
+pub(crate) trait CrcHashable {
+  fn add_to(&self, crc: &mut Crc);
+}
+
+impl CrcHashable for u8 {
+  fn add_to(&self, crc: &mut Crc) {
+    let val = *self;
+    let idx = crc.0 as u8;
+    let idx = idx ^ val;
+
+    crc.0 = DATA_LUT[idx as usize] ^ (crc.0 >> 8);
+  }
 }
 
 /// Standard CRC-32 table for the `$EDB88320` polynomial.

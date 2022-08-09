@@ -1,33 +1,28 @@
 use crate::{
-  crc::{Crc, CrcSource},
-  gb::{CpuReg8, CpuTestHarness},
+  crc::Crc,
+  gb::{mem::Mem, CpuReg8, CpuTestHarness},
 };
 
-pub(crate) fn bit_ops(cpu: &mut impl CpuTestHarness) {
+pub fn bit_ops(cpu: &mut impl CpuTestHarness) {
   let mut crc = Crc::default();
+  let mut mem = Mem::default();
 
   for (expected, instr) in INSTRS {
-    cpu.set_mem_linear(0, instr);
-
     for f in [0x00, 0xf0] {
-      for n in 0..10 {
-        let a = VALUES[n];
-
-        for n in 0..10 {
-          cpu.set_reg_8(CpuReg8::B, VALUES[n + 0]); // BC
-          cpu.set_reg_8(CpuReg8::C, VALUES[n + 1]);
-
-          cpu.set_reg_8(CpuReg8::H, VALUES[n + 2]); // HL
-          cpu.set_reg_8(CpuReg8::L, VALUES[n + 3]);
-
-          cpu.set_reg_8(CpuReg8::D, VALUES[n + 4]); // DE
-          cpu.set_reg_8(CpuReg8::E, VALUES[n + 5]);
-
-          cpu.set_reg_8(CpuReg8::A, a); // AF
+      for n in 0..VALUES.len() {
+        for m in 0..VALUES.len() {
+          cpu.set_reg_8(CpuReg8::A, VALUES[n]); // AF
           cpu.set_reg_8(CpuReg8::F, f);
+          cpu.set_reg_8(CpuReg8::B, VALUES[(m + 0) % VALUES.len()]); // BC
+          cpu.set_reg_8(CpuReg8::C, VALUES[(m + 1) % VALUES.len()]);
+          cpu.set_reg_8(CpuReg8::D, VALUES[(m + 4) % VALUES.len()]); // DE
+          cpu.set_reg_8(CpuReg8::E, VALUES[(m + 5) % VALUES.len()]);
+          cpu.set_reg_8(CpuReg8::H, VALUES[(m + 2) % VALUES.len()]); // HL
+          cpu.set_reg_8(CpuReg8::L, VALUES[(m + 3) % VALUES.len()]);
 
-          cpu.run();
-          cpu.add(&mut crc);
+          cpu.execute(&mut mem, instr);
+
+          crc.add(cpu);
         }
       }
     }
@@ -36,7 +31,8 @@ pub(crate) fn bit_ops(cpu: &mut impl CpuTestHarness) {
   }
 }
 
-#[rustfmt::skip]
+const VALUES: [u8; 10] = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xff];
+
 const INSTRS: [(u32, &'static [u8]); 168] = [
   (0x164a5146, &[0xcb, 0x40]), // bit  0,b
   (0x4eb218d4, &[0xcb, 0x41]), // bit  0,c
@@ -206,10 +202,4 @@ const INSTRS: [(u32, &'static [u8]); 168] = [
   (0x68a2990a, &[0xcb, 0xfc]), // set  7,h
   (0x9ced585d, &[0xcb, 0xfd]), // set  7,l
   (0x74cd82b9, &[0xcb, 0xff]), // set  7,a
-];
-
-#[rustfmt::skip]
-const VALUES: [u8; 20] = [
-  0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xff,
-  0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xff,
 ];

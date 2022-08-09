@@ -1,44 +1,43 @@
 use crate::{
   crc::Crc,
-  gb::{CpuReg16, CpuReg8, CpuTestHarness, RP_TEMP},
+  gb::{mem::Mem, CpuReg8, CpuTestHarness},
 };
 
-const BC: u16 = RP_TEMP + 0;
-const DE: u16 = RP_TEMP + 1;
-const HL: u16 = RP_TEMP + 2;
+const BC: u16 = 0xdef4;
+const DE: u16 = 0xdef5;
+const HL: u16 = 0xdef6;
 
-pub(crate) fn op_a_hl(cpu: &mut impl CpuTestHarness) {
+pub fn op_a_hl(cpu: &mut impl CpuTestHarness) {
   let mut crc = Crc::default();
+  let mut mem = Mem::default();
 
   for (expected, instr) in INSTRS {
-    cpu.set_mem_linear(0, instr);
-
     for f in [0x00, 0x10, 0xe0, 0xf0] {
-      for n in 0..14 {
-        let a = VALUES[n];
-
-        for n in 0..14 {
-          cpu.set_mem(BC, VALUES[n + 0]);
-          cpu.set_mem(DE, VALUES[n + 1]);
-          cpu.set_mem(HL, VALUES[n + 2]);
-
-          cpu.set_reg_16(CpuReg16::BC, BC); // BC
-          cpu.set_reg_16(CpuReg16::DE, DE); // DE
-          cpu.set_reg_16(CpuReg16::HL, HL); // HL
-
-          cpu.set_reg_8(CpuReg8::A, a); // AF
+      for n in 0..VALUES.len() {
+        for m in 0..VALUES.len() {
+          cpu.set_reg_8(CpuReg8::A, VALUES[n]); // AF
           cpu.set_reg_8(CpuReg8::F, f);
+          cpu.set_reg_8(CpuReg8::B, (BC >> 8) as u8); // BC
+          cpu.set_reg_8(CpuReg8::C, (BC >> 0) as u8);
+          cpu.set_reg_8(CpuReg8::D, (DE >> 8) as u8); // DE
+          cpu.set_reg_8(CpuReg8::E, (DE >> 0) as u8);
+          cpu.set_reg_8(CpuReg8::H, (HL >> 8) as u8); // HL
+          cpu.set_reg_8(CpuReg8::L, (HL >> 0) as u8);
 
-          cpu.run();
+          mem.set(BC, VALUES[(m + 0) % VALUES.len()]);
+          mem.set(DE, VALUES[(m + 1) % VALUES.len()]);
+          mem.set(HL, VALUES[(m + 2) % VALUES.len()]);
 
-          crc.add(cpu.get_reg_8(CpuReg8::A));
-          crc.add(cpu.get_reg_8(CpuReg8::F));
-          crc.add(cpu.get_reg_8(CpuReg8::H));
-          crc.add(cpu.get_reg_8(CpuReg8::L));
+          cpu.execute(&mut mem, instr);
 
-          crc.add(cpu.get_mem(BC));
-          crc.add(cpu.get_mem(DE));
-          crc.add(cpu.get_mem(HL));
+          crc.add(&cpu.get_reg_8(CpuReg8::A));
+          crc.add(&cpu.get_reg_8(CpuReg8::F));
+          crc.add(&cpu.get_reg_8(CpuReg8::H));
+          crc.add(&cpu.get_reg_8(CpuReg8::L));
+
+          crc.add(&mem.get(BC));
+          crc.add(&mem.get(DE));
+          crc.add(&mem.get(HL));
         }
       }
     }
@@ -47,7 +46,10 @@ pub(crate) fn op_a_hl(cpu: &mut impl CpuTestHarness) {
   }
 }
 
-#[rustfmt::skip]
+const VALUES: [u8; 14] = [
+  0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff, 0x02, 0x04, 0x08, 0x20, 0x40,
+];
+
 const INSTRS: [(u32, &'static [u8]); 51] = [
   (0xa709e5e0, &[0x0a]),       // ld   a,(bc)
   (0xae0d28fb, &[0x1a]),       // ld   a,(de)
@@ -100,10 +102,4 @@ const INSTRS: [(u32, &'static [u8]); 51] = [
   (0x96a4033f, &[0xcb, 0xf6]), // set  6,(hl)
   (0x889e1fc3, &[0xcb, 0xfe]), // set  7,(hl)
   (0xb11fdf0c, &[0x27]),       // daa
-];
-
-#[rustfmt::skip]
-const VALUES: [u8; 28] = [
-  0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff, 0x02, 0x04, 0x08, 0x20, 0x40,
-  0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff, 0x02, 0x04, 0x08, 0x20, 0x40,
 ];

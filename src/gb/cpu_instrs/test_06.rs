@@ -1,32 +1,39 @@
 use crate::{
-  crc::{Crc, CrcSource},
-  gb::{CpuReg16, CpuTestHarness, RP_TEMP},
+  crc::Crc,
+  gb::{mem::Mem, CpuReg8, CpuTestHarness},
 };
 
-pub(crate) fn ld_r_r(cpu: &mut impl CpuTestHarness) {
+const BC: u16 = 0x3456;
+const DE: u16 = 0x789a;
+const HL: u16 = 0xdef4;
+
+pub fn ld_r_r(cpu: &mut impl CpuTestHarness) {
   let mut crc = Crc::default();
+  let mut mem = Mem::default();
 
   for (expected, instr) in INSTRS {
-    cpu.set_mem_linear(0, instr);
+    for f in [0x00, 0x10, 0xe0, 0xf0] {
+      let a = 0xbc;
+      cpu.set_reg_8(CpuReg8::A, a); // AF
+      cpu.set_reg_8(CpuReg8::F, f);
+      cpu.set_reg_8(CpuReg8::B, (BC >> 8) as u8); // BC
+      cpu.set_reg_8(CpuReg8::C, (BC >> 0) as u8);
+      cpu.set_reg_8(CpuReg8::D, (DE >> 8) as u8); // DE
+      cpu.set_reg_8(CpuReg8::E, (DE >> 0) as u8);
+      cpu.set_reg_8(CpuReg8::H, (HL >> 8) as u8); // HL
+      cpu.set_reg_8(CpuReg8::L, (HL >> 0) as u8);
+      mem.set(HL, 0xde);
 
-    for af in [0xbc00, 0xbc10, 0xbce0, 0xbcf0] {
-      cpu.set_mem(RP_TEMP, 0xde);
+      cpu.execute(&mut mem, instr);
 
-      cpu.set_reg_16(CpuReg16::BC, 0x3456);
-      cpu.set_reg_16(CpuReg16::DE, 0x789a);
-      cpu.set_reg_16(CpuReg16::HL, RP_TEMP);
-      cpu.set_reg_16(CpuReg16::AF, af);
-
-      cpu.run();
-      cpu.add(&mut crc);
-      crc.add(cpu.get_mem(RP_TEMP));
+      crc.add(cpu);
+      crc.add(&mem.get(HL));
     }
 
     assert_eq!(expected, crc.take_val(), "instr={:?}", instr);
   }
 }
 
-#[rustfmt::skip]
 const INSTRS: [(u32, &'static [u8]); 63] = [
   (0x06af3a40, &[0x40]), // ld   b,b
   (0xabb2cbb6, &[0x41]), // ld   b,c

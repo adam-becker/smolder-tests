@@ -1,33 +1,28 @@
 use crate::{
-  crc::{Crc, CrcSource},
-  gb::{CpuReg8, CpuTestHarness},
+  crc::Crc,
+  gb::{mem::Mem, CpuReg8, CpuTestHarness},
 };
 
-pub(crate) fn op_r_r(cpu: &mut impl CpuTestHarness) {
+pub fn op_r_r(cpu: &mut impl CpuTestHarness) {
   let mut crc = Crc::default();
+  let mut mem = Mem::default();
 
   for (expected, instr) in INSTRS {
-    cpu.set_mem_linear(0, instr);
-
     for f in [0x00, 0xf0] {
       for n in 0..9 {
-        let a = VALUES[n];
-
-        for n in 0..9 {
-          cpu.set_reg_8(CpuReg8::A, a); // AF
+        for m in 0..9 {
+          cpu.set_reg_8(CpuReg8::A, VALUES[n]); // AF
           cpu.set_reg_8(CpuReg8::F, f);
+          cpu.set_reg_8(CpuReg8::B, VALUES[(m + 0) % VALUES.len()]); // BC
+          cpu.set_reg_8(CpuReg8::C, VALUES[(m + 1) % VALUES.len()]);
+          cpu.set_reg_8(CpuReg8::D, VALUES[(m + 4) % VALUES.len()]); // DE
+          cpu.set_reg_8(CpuReg8::E, VALUES[(m + 5) % VALUES.len()]);
+          cpu.set_reg_8(CpuReg8::H, VALUES[(m + 2) % VALUES.len()]); // HL
+          cpu.set_reg_8(CpuReg8::L, VALUES[(m + 3) % VALUES.len()]);
 
-          cpu.set_reg_8(CpuReg8::B, VALUES[n + 0]); // BC
-          cpu.set_reg_8(CpuReg8::C, VALUES[n + 1]);
+          cpu.execute(&mut mem, instr);
 
-          cpu.set_reg_8(CpuReg8::H, VALUES[n + 2]); // HL
-          cpu.set_reg_8(CpuReg8::L, VALUES[n + 3]);
-
-          cpu.set_reg_8(CpuReg8::D, VALUES[n + 4]); // DE
-          cpu.set_reg_8(CpuReg8::E, VALUES[n + 5]);
-
-          cpu.run();
-          cpu.add(&mut crc);
+          crc.add(cpu);
         }
       }
     }
@@ -35,6 +30,8 @@ pub(crate) fn op_r_r(cpu: &mut impl CpuTestHarness) {
     assert_eq!(expected, crc.take_val(), "instr={:?}", instr);
   }
 }
+
+const VALUES: [u8; 9] = [0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff];
 
 #[rustfmt::skip]
 const INSTRS: [(u32, &'static [u8]); 134] = [
@@ -172,10 +169,4 @@ const INSTRS: [(u32, &'static [u8]); 134] = [
   (0xce125642, &[0xcb, 0x3c]), // srl  h
   (0x3c4613bb, &[0xcb, 0x3d]), // srl  l
   (0x53fb5abe, &[0xcb, 0x3f]), // srl  a
-];
-
-#[rustfmt::skip]
-const VALUES: [u8; 18] = [
-  0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff,
-  0x00, 0x01, 0x0f, 0x10, 0x1f, 0x7f, 0x80, 0xf0, 0xff,
 ];
